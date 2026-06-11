@@ -1,133 +1,173 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Pamuk Hasat Sensörü</title>
-  <style>
-    body { 
-      background: url('https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center/cover;
-      background-color: transparent;
-      background-blend-mode: overlay;
-      color: #fff; 
-      font-family: sans-serif; 
-      text-align: center; 
-      margin: 0; 
-      padding: 50px;
-      position: relative;
-    }
-
-    body::after {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255,255,255,0.2);
-      animation: fadeOut 1s forwards;
-      pointer-events: none;
-    }
-
-    @keyframes fadeOut {
-      to { opacity: 0; }
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 60px;
-      height: 60px;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Cotton-plant.jpg/120px-Cotton-plant.jpg') no-repeat center/cover;
-      border-radius: 50%;
-      border: 3px solid #fff;
-      box-shadow: 0 0 15px rgba(255,255,255,0.7);
-      z-index: 10;
-      animation: dön 2s infinite linear;
-    }
-
-    @keyframes dön {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-
-    .veri { 
-      font-size: 24px; 
-      margin: 20px 0; 
-      background: rgba(0,0,0,0.5);
-      padding: 10px;
-      border-radius: 10px;
-      display: inline-block;
-    }
-    .uyari { 
-      color: #ff5e5e; 
-      font-size: 32px; 
-      font-weight: bold; 
-      margin: 30px 0; 
-    }
-    .iller {
-      margin-top: 40px;
-      font-size: 20px;
-    }
-    .iller ul {
-      list-style: none;
-      padding: 0;
-    }
-    .iller li {
-      margin: 10px 0;
-    }
-    button { 
-      background: #2b5e7a; 
-      color: white; 
-      border: none; 
-      padding: 15px 30px; 
-      font-size: 18px; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      margin-top: 20px;
-    }
-    footer {
-      margin-top: 60px;
-      font-size: 14px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal - Mainframe Access</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #050505;
+            color: #00ff33;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            overflow-y: scroll;
+            height: 100vh;
+            text-shadow: 0 0 5px #00ff33;
+        }
+        /* CRT Ekran Çizgisi Efekti */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        #terminal {
+            max-width: 1000px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .output-line {
+            white-space: pre-wrap;
+            margin-bottom: 5px;
+        }
+        .error { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
+        .success { color: #00ffff; text-shadow: 0 0 5px #00ffff; }
+        .warning { color: #ffff00; text-shadow: 0 0 5px #ffff00; }
+        
+        #input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        #prompt {
+            margin-right: 10px;
+            color: #00ff33;
+        }
+        #cmd-input {
+            background: transparent;
+            border: none;
+            color: #00ff33;
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            flex-grow: 1;
+            text-shadow: 0 0 5px #00ff33;
+        }
+    </style>
 </head>
 <body>
 
-  <h1>Pamuk Hasat Sensörü</h1>
-  
-  <div class="veri">Şanlıurfa Anlık: Yükleniyor...</div>
-  <div class="veri">Genel: Sıcaklık: 28°C | Nem: %42 | Rüzgar: 12 km/saat</div>
+<div id="terminal">
+    <div class="output-line warning">==================================================</div>
+    <div class="output-line warning">SYS-LOG: ANA SISTEME BAGLANTI KURULDU...          </div>
+    <div class="output-line warning">YARDIM ICIN 'help' YAZIN.                         </div>
+    <div class="output-line warning">==================================================</div>
+    <div id="logs"></div>
+    
+    <div id="input-line">
+        <span id="prompt">C:\Users\Root></span>
+        <input type="text" id="cmd-input" autofocus autocomplete="off" spellcheck="false">
+    </div>
+</div>
 
-  <div class="uyari">HASAT UYARISI</div>
-  <p>Pamuk çiçeği açtı. Üç gün içinde topla. Yoksa kalite düşer.</p>
-  <p>🌸➡️⏳</p>
+<script>
+    const cmdInput = document.getElementById('cmd-input');
+    const logs = document.getElementById('logs');
+    const inputLine = document.getElementById('input-line');
 
-  <button>Tamam, bildirdim</button>
+    // "find hack" komutu yazılınca sırayla akacak havalı metinler
+    const hackTexts = [
+        "PROXIES INITIALIZED...",
+        "CONNECTING TO SYSTEM MAINFRAME [IP: 185.105.42.11]...",
+        "BYPASSING SECURITY FIREWALL... [ATTEMPT 1: FAILED]",
+        "BYPASSING SECURITY FIREWALL... [ATTEMPT 2: SUCCESS]",
+        "EXTRACTING USER_DATA.DB FROM TARGET...",
+        "CRITICAL WARNING: SYSTEM ADMINISTRATOR ALERTED!",
+        "DOWNLOADING ENCRYPTED ACCESS TOKENS...",
+        "PORT REBOUND: COOKIES INJECTED INTO PORT 8080...",
+        "SQL INJECTION SUCCESSFUL: DATABASE TABLES EXPOSED.",
+        "ACCESS GRANTED // CURRENT DIRECTORY: ROOT_ACCESS",
+        "DELETING LOG FILES TO ERASE DIGITAL FOOTPRINTS...",
+        "OVERRIDING TARGET DEVICE MAIN CONTROL...",
+        "HACKING COMPLETE. SYSTEM IS COMPLETELY COMPROMISED."
+    ];
 
-  <div class="iller">
-    <h2>Pamuk Yetişen Başlıca İller</h2>
-    <ul>
-      <li>🇹🇷 Şanlıurfa – %41 üretim</li>
-      <li>🇹🇷 Diyarbakır – %17</li>
-      <li>🇹🇷 Aydın – %11</li>
-      <li>🇹🇷 Hatay & Adana – %8</li>
-    </ul>
-  </div>
+    // Sayfada boş bir yere tıklansa bile input'a odaklansın (CMD hissi için)
+    document.addEventListener('click', () => {
+        cmdInput.focus();
+    });
 
-  <footer>
-    <small>Teknofest 2026 – Eymen Talha & Takım</small>
-  </footer>
+    cmdInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            let input = cmdInput.value.trim().toLowerCase();
+            printLine(`C:\\Users\\Root> ${cmdInput.value}`, '');
+            cmdInput.value = '';
 
-  <script>
-    fetch('https://api.openweathermap.org/data/2.5/weather?q=Sanliurfa,TR&appid=123dc6f0ebf28ca448f9043ed8f26f5b&units=metric&lang=tr')
-      .then(r => r.json())
-      .then(d => {
-        document.querySelector('.veri').innerHTML = 
-          `Şanlıurfa Anlık: ${d.main.temp}°C | Nem ${d.main.humidity}% | Rüzgar ${d.wind.speed} km/s`;
-      })
-      .catch(e => {
-        document.querySelector('.veri').innerHTML = "Veri alınamadı... API biraz yavaş bugün.";
-      });
-  </script>
+            if (input === 'help') {
+                printLine("\nKullanilabilir Komutlar:\n- help: Komutlari listeler.\n- clear: Ekrani temizler.\n- find hack: Hack işlemini baslatir.\n- status: Sistem durumunu gosterir.\n", 'success');
+            } 
+            else if (input === 'clear') {
+                logs.innerHTML = '';
+            } 
+            else if (input === 'status') {
+                printLine("SYSTEM STATUS: ONLINE\nFIREWALL: VULNERABLE\nTARGET IP: 85.105.42.11", 'success');
+            }
+            else if (input === 'find hack' || input === 'hack') {
+                startHackEffect();
+            } 
+            else if (input === '') {
+                // Boş bırakıp enter'larsa alt satıra geçsin
+            }
+            else {
+                printLine(`Hata: '${input}' taninan bir komut degil.`, 'error');
+            }
+            
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    });
 
+    function printLine(text, className) {
+        const div = document.createElement('div');
+        div.className = `output-line ${className}`;
+        div.innerText = text;
+        logs.appendChild(div);
+    }
+
+    function startHackEffect() {
+        inputLine.style.display = 'none'; // Giriş satırını gizle
+        printLine("\n!!! UYARI: ILLEGAL HACK ISLEMI BASLATILDI !!!\n", "error");
+        
+        let counter = 0;
+        
+        // Metinlerin akış hızı (200 milisaniye)
+        const interval = setInterval(() => {
+            if (counter < hackTexts.length) {
+                // Rastgele yeşil veya kırmızı renk vererek kaos yaratıyoruz
+                let type = Math.random() > 0.4 ? 'success' : 'error';
+                
+                // İlk ve son satır özel renkli olsun
+                if (counter === 0 || counter === hackTexts.length - 1) type = 'warning'; 
+                
+                printLine(`[+] ${hackTexts[counter]}`, type);
+                counter++;
+                window.scrollTo(0, document.body.scrollHeight);
+            } else {
+                clearInterval(interval);
+                printLine("\n[!] ISLEM TAMAMLANDI. SISTEM ELE GECIRILDI.", "warning");
+                inputLine.style.display = 'flex'; // Girişi tekrar aç
+                cmdInput.focus();
+            }
+        }, 220); 
+    }
+</script>
 </body>
 </html>
