@@ -1,173 +1,229 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminal - Mainframe Access</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background-color: #050505;
-            color: #00ff33;
-            font-family: 'Courier New', Courier, monospace;
-            padding: 20px;
-            overflow-y: scroll;
-            height: 100vh;
-            text-shadow: 0 0 5px #00ff33;
-        }
-        /* CRT Ekran Çizgisi Efekti */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-        #terminal {
-            max-width: 1000px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-        .output-line {
-            white-space: pre-wrap;
-            margin-bottom: 5px;
-        }
-        .error { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
-        .success { color: #00ffff; text-shadow: 0 0 5px #00ffff; }
-        .warning { color: #ffff00; text-shadow: 0 0 5px #ffff00; }
-        
-        #input-line {
-            display: flex;
-            align-items: center;
-            margin-top: 10px;
-        }
-        #prompt {
-            margin-right: 10px;
-            color: #00ff33;
-        }
-        #cmd-input {
-            background: transparent;
-            border: none;
-            color: #00ff33;
-            font-family: inherit;
-            font-size: inherit;
-            outline: none;
-            flex-grow: 1;
-            text-shadow: 0 0 5px #00ff33;
-        }
-    </style>
-</head>
-<body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Usta'nın Mahallesi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600;700&display=swap">
+<style>
+:root{
+  --bg:#0b1020;--panel:rgba(14,19,40,.78);--line:rgba(160,175,230,.22);
+  --ink:#eef0ff;--muted:#9aa5cf;--amber:#ffb454;--pink:#ff4fa3;--cyan:#4fd8ff;
+  --good:#6fe3a0;--warn:#ffb454;--bad:#ff6b6b;
+  --display:'Anton','Impact','Arial Narrow',sans-serif;
+  --body:'Archivo','Segoe UI',system-ui,sans-serif;color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+#stage{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage:active{cursor:grabbing}
+.hud{position:fixed;z-index:2;pointer-events:none}
+.hud *{pointer-events:auto}
+#stats{left:16px;top:calc(12px + env(safe-area-inset-top,0px));width:min(250px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;backdrop-filter:blur(6px)}
+#stats h1{font:400 20px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px;color:var(--amber)}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:baseline;margin-top:8px}
+.row b{font-weight:600;font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.row span{font-variant-numeric:tabular-nums;font-weight:700}
+.bar{grid-column:1/-1;height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.bar i{display:block;height:100%;width:50%;background:var(--good);border-radius:3px;transition:width .3s,background .3s}
+#top-right{right:16px;top:calc(12px + env(safe-area-inset-top,0px));display:flex;gap:8px;align-items:center}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-variant-numeric:tabular-nums;font-weight:700;backdrop-filter:blur(6px)}
+.chip.clock{font:400 20px/1 var(--display);letter-spacing:.08em}
+button.ico{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:700 18px/1 var(--body);cursor:pointer;backdrop-filter:blur(6px)}
+button.ico:focus-visible,.act:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+#help{right:16px;top:calc(62px + env(safe-area-inset-top,0px));width:min(260px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;line-height:1.5;color:var(--muted);backdrop-filter:blur(6px)}
+#help b{color:var(--ink)}
+#toast{left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(460px,calc(100vw - 32px));text-align:center;background:rgba(10,14,30,.9);border:1px solid var(--line);border-radius:10px;padding:10px 16px;opacity:0;transition:opacity .25s;pointer-events:none;line-height:1.35}
+#toast.on{opacity:1}
+#prompt{left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(560px,calc(100vw - 32px))}
+.zonename{flex-basis:100%;text-align:center;font:400 16px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.act{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 14px;color:var(--ink);font:600 14px/1.2 var(--body);cursor:pointer;backdrop-filter:blur(6px)}
+.act kbd{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:6px;background:var(--amber);color:#1a1205;font:700 13px/1 var(--body)}
+#bubble{position:fixed;z-index:1;pointer-events:none;transform:translate(-50%,-100%);max-width:200px;background:#fff7ee;color:#2b1d12;border-radius:12px;padding:7px 11px;font-weight:600;font-size:12.5px;line-height:1.3;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.4);opacity:0;transition:opacity .2s}
+#bubble small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a0522d;margin-bottom:2px}
+#bubble:after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:#fff7ee}
+#stick{left:20px;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:130px;height:130px;border-radius:50%;border:1px solid var(--line);background:rgba(14,19,40,.45);display:none;touch-action:none}
+#stick i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px;border-radius:50%;background:rgba(255,180,84,.55);border:1px solid var(--amber)}
+@media (pointer:coarse){#stick{display:block}#prompt{bottom:calc(168px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:520px){#top-right{flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 236px)}#stats{width:200px;padding:10px 12px}#stats h1{font-size:16px}.row{margin-top:6px}#top-right .chip.money{display:none}}
+@media (prefers-reduced-motion:reduce){.bar i,#toast,#bubble{transition:none}}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);color:var(--amber);font:400 22px/1 var(--display);letter-spacing:.12em;z-index:5;transition:opacity .5s}
+#loading.off{opacity:0;pointer-events:none}
+/* --- SİNEMATİK --- */
+#cinema{position:fixed;inset:0;z-index:4;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,0) 42%,rgba(0,0,0,.55) 100%);opacity:0;transition:opacity .8s}
+#cinema.on{opacity:1}
+#cineText{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(680px,calc(100vw - 40px));text-align:center;color:#fff;font:600 17px/1.6 var(--body);text-shadow:0 2px 12px rgba(0,0,0,.9);opacity:0;transition:opacity .5s;pointer-events:none;z-index:5}
+#cineText.on{opacity:1}
+#cineText small{display:block;font:700 12px/1 var(--body);letter-spacing:.18em;text-transform:uppercase;color:var(--pink);margin-bottom:8px}
+#cineHint{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);border:1px solid var(--line);border-radius:10px;padding:6px 14px;font:600 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:0;transition:opacity .5s;z-index:5;pointer-events:none}
+#cineHint.on{opacity:1}
+</style>
 
-<div id="terminal">
-    <div class="output-line warning">==================================================</div>
-    <div class="output-line warning">SYS-LOG: ANA SISTEME BAGLANTI KURULDU...          </div>
-    <div class="output-line warning">YARDIM ICIN 'help' YAZIN.                         </div>
-    <div class="output-line warning">==================================================</div>
-    <div id="logs"></div>
-    
-    <div id="input-line">
-        <span id="prompt">C:\Users\Root></span>
-        <input type="text" id="cmd-input" autofocus autocomplete="off" spellcheck="false">
-    </div>
+<canvas id="stage" aria-label="Ev, dükkan ve gece kulübünden oluşan gezilebilir 3D mahalle"></canvas>
+
+<div class="hud" id="stats">
+  <h1>Usta Kemal</h1>
+  <div class="row"><b>Para</b><span id="vMoney">₺1.200</span></div>
+  <div class="row"><b>Elif'in keyfi</b><span id="vMood">70</span><div class="bar"><i id="bMood"></i></div></div>
+  <div class="row"><b>Evin erzağı</b><span id="vSup">60</span><div class="bar"><i id="bSup"></i></div></div>
+  <div class="row"><b>Ustanın keyfi</b><span id="vFun">50</span><div class="bar"><i id="bFun"></i></div></div>
 </div>
+<div class="hud" id="top-right">
+  <div class="chip clock" id="clock">20:30</div>
+  <button class="ico" id="vbtn" aria-label="Bakışı değiştir" title="Bakış 1 / 2 (V)">2</button>
+  <button class="ico" id="zin" aria-label="Yakınlaştır">+</button>
+  <button class="ico" id="zout" aria-label="Uzaklaştır">−</button>
+  <button class="ico" id="hbtn" aria-label="Yardım">?</button>
+</div>
+<div class="hud" id="help" hidden>
+  <b>Yürü:</b> W A S D veya ok tuşları (Shift: koş)<br>
+  <b>Kamera:</b> sahnede sürükle, tekerlekle yakınlaş<br>
+  <b>Bakış:</b> V tuşu veya üstteki düğme (1: üstten, 2: sokak)<br>
+  <b>Eylem:</b> bir mekânın içindeyken E ve F<br>
+  <b>Sahne:</b> başlayınca E/ESC ile bitir<br>
+  Elif'in keyfi, erzak ve para zamanla azalır. Dengeyi sen kurarsın.
+</div>
+<div class="hud" id="toast" role="status"></div>
+<div class="hud" id="prompt"></div>
+<div id="bubble"></div>
+<div class="hud" id="stick"><i></i></div>
+<div id="loading">MAHALLE YÜKLENİYOR</div>
+<div id="cinema"></div>
+<div id="cineText"></div>
+<div id="cineHint">E veya ESC — sahneyi bitir</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-    const cmdInput = document.getElementById('cmd-input');
-    const logs = document.getElementById('logs');
-    const inputLine = document.getElementById('input-line');
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var canvas=$('stage');
+var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+var scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0b1020);
+scene.fog=new THREE.Fog(0x0b1020,42,95);
+var camera=new THREE.PerspectiveCamera(48,1,0.1,220);
 
-    // "find hack" komutu yazılınca sırayla akacak havalı metinler
-    const hackTexts = [
-        "PROXIES INITIALIZED...",
-        "CONNECTING TO SYSTEM MAINFRAME [IP: 185.105.42.11]...",
-        "BYPASSING SECURITY FIREWALL... [ATTEMPT 1: FAILED]",
-        "BYPASSING SECURITY FIREWALL... [ATTEMPT 2: SUCCESS]",
-        "EXTRACTING USER_DATA.DB FROM TARGET...",
-        "CRITICAL WARNING: SYSTEM ADMINISTRATOR ALERTED!",
-        "DOWNLOADING ENCRYPTED ACCESS TOKENS...",
-        "PORT REBOUND: COOKIES INJECTED INTO PORT 8080...",
-        "SQL INJECTION SUCCESSFUL: DATABASE TABLES EXPOSED.",
-        "ACCESS GRANTED // CURRENT DIRECTORY: ROOT_ACCESS",
-        "DELETING LOG FILES TO ERASE DIGITAL FOOTPRINTS...",
-        "OVERRIDING TARGET DEVICE MAIN CONTROL...",
-        "HACKING COMPLETE. SYSTEM IS COMPLETELY COMPROMISED."
-    ];
+var T=0.3, ZF=-2, FY=0.12;
+var rects=[];
+function M(c,o){return new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:0.82,metalness:0},o||{}))}
+function E(c,i,o){return new THREE.MeshStandardMaterial(Object.assign({color:0x000000,emissive:c,emissiveIntensity:i===undefined?1:i,roughness:0.5},o||{}))}
+function B(c,o){return new THREE.MeshBasicMaterial(Object.assign({color:c},o||{}))}
+function box(w,h,d,mat,x,y,z,parent,col,noShadow){
+  var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+  m.position.set(x,y+h/2,z);
+  if(!noShadow)m.castShadow=true;
+  m.receiveShadow=true;
+  (parent||scene).add(m);
+  if(col)rects.push([x-w/2,z-d/2,x+w/2,z+d/2]);
+  return m;
+}
+function cyl(rt,rb,h,mat,x,y,z,parent,seg){
+  var m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||16),mat);
+  m.position.set(x,y+h/2,z);m.castShadow=true;m.receiveShadow=true;
+  (parent||scene).add(m);return m;
+}
+function sph(r,mat,x,y,z,parent,seg){
+  var m=new THREE.Mesh(new THREE.SphereGeometry(r,seg||16,12),mat);
+  m.position.set(x,y,z);m.castShadow=true;(parent||scene).add(m);return m;
+}
+function plane(w,h,mat,x,y,z,ry,rx,parent){
+  var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);
+  m.position.set(x,y,z);m.rotation.y=ry||0;m.rotation.x=rx||0;(parent||scene).add(m);return m;
+}
+function wall(x1,z1,x2,z2,h,mat,col){return box(x2-x1,h,z2-z1,mat,(x1+x2)/2,FY,(z1+z2)/2,scene,col!==false)}
+function cv(w,h,draw){var c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);var t=new THREE.CanvasTexture(c);t.anisotropy=4;return t}
+function rnd(a,b){return a+Math.random()*(b-a)}
+var glowTex=cv(128,128,function(g,w,h){var r=g.createRadialGradient(64,64,0,64,64,64);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(.25,'rgba(255,255,255,.5)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,w,h)});
+function glow(x,y,z,color,size,op,parent){var s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:color,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false}));s.position.set(x,y,z);s.scale.set(size,size,1);(parent||scene).add(s);return s}
+function signTex(text,sub,o){return cv(o.w,o.h,function(g,w,h){if(o.bg){g.fillStyle=o.bg;g.fillRect(0,0,w,h)}g.textAlign='center';g.textBaseline='middle';if(o.glow){g.shadowColor=o.glow;g.shadowBlur=o.blur||24}g.fillStyle=o.fg;g.font=(o.font||'bold 90px Impact,"Arial Black",sans-serif');g.fillText(text,w/2,sub?h*0.42:h/2);if(sub){g.font=o.subFont||'bold 30px "Arial Black",sans-serif';g.fillStyle=o.subFg||o.fg;g.fillText(sub,w/2,h*0.8)}if(o.border){g.shadowBlur=o.blur||18;g.strokeStyle=o.border;g.lineWidth=6;g.strokeRect(10,10,w-20,h-20)}})}
+function blocked(x,z,r){for(var i=0;i<rects.length;i++){var q=rects[i];var cx=Math.max(q[0],Math.min(x,q[2])),cz=Math.max(q[1],Math.min(z,q[3]));var dx=x-cx,dz=z-cz;if(dx*dx+dz*dz<r*r)return true}return false}
 
-    // Sayfada boş bir yere tıklansa bile input'a odaklansın (CMD hissi için)
-    document.addEventListener('click', () => {
-        cmdInput.focus();
-    });
+scene.add(new THREE.HemisphereLight(0x7f93d0,0x2a2038,0.95));
+var moon=new THREE.DirectionalLight(0xa9bcff,0.55);
+moon.position.set(-14,34,22);moon.castShadow=true;
+moon.shadow.mapSize.set(3072,3072);
+var sc=moon.shadow.camera;sc.left=-58;sc.right=58;sc.top=38;sc.bottom=-34;sc.near=1;sc.far=90;moon.shadow.bias=-0.0006;
+scene.add(moon);
 
-    cmdInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            let input = cmdInput.value.trim().toLowerCase();
-            printLine(`C:\\Users\\Root> ${cmdInput.value}`, '');
-            cmdInput.value = '';
+var asphalt=cv(512,512,function(g,w,h){g.fillStyle='#232733';g.fillRect(0,0,w,h);for(var i=0;i<2600;i++){g.fillStyle='rgba('+(60+Math.random()*40|0)+','+(60+Math.random()*40|0)+','+(70+Math.random()*40|0)+','+Math.random()*.25+')';g.fillRect(Math.random()*w,Math.random()*h,2,2)}});
+asphalt.wrapS=asphalt.wrapT=THREE.RepeatWrapping;asphalt.repeat.set(26,1.2);
+var ground=new THREE.Mesh(new THREE.PlaneGeometry(260,160),M(0x1c2230));
+ground.rotation.x=-Math.PI/2;ground.position.set(0,0,-30);ground.receiveShadow=true;scene.add(ground);
+var road=new THREE.Mesh(new THREE.PlaneGeometry(130,6.4),new THREE.MeshStandardMaterial({map:asphalt,roughness:0.95}));
+road.rotation.x=-Math.PI/2;road.position.set(-2,0.04,3.8);road.receiveShadow=true;scene.add(road);
+for(var li=-30;li<28;li+=4){plane(2,0.16,B(0xd8d2a8),li,0.06,3.8,0,-Math.PI/2)}
+box(130,0.12,2.2,M(0x4a4f63),-2,0,-0.9,scene,false,true);
+box(130,0.12,1.2,M(0x4a4f63),-2,0,7.6,scene,false,true);
+box(130,0.16,0.2,M(0x5b6078),-2,0,0.35,scene,false,true);
 
-            if (input === 'help') {
-                printLine("\nKullanilabilir Komutlar:\n- help: Komutlari listeler.\n- clear: Ekrani temizler.\n- find hack: Hack işlemini baslatir.\n- status: Sistem durumunu gosterir.\n", 'success');
-            } 
-            else if (input === 'clear') {
-                logs.innerHTML = '';
-            } 
-            else if (input === 'status') {
-                printLine("SYSTEM STATUS: ONLINE\nFIREWALL: VULNERABLE\nTARGET IP: 85.105.42.11", 'success');
-            }
-            else if (input === 'find hack' || input === 'hack') {
-                startHackEffect();
-            } 
-            else if (input === '') {
-                // Boş bırakıp enter'larsa alt satıra geçsin
-            }
-            else {
-                printLine(`Hata: '${input}' taninan bir komut degil.`, 'error');
-            }
-            
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-    });
+var winTex=cv(256,256,function(g,w,h){g.fillStyle='#10152b';g.fillRect(0,0,w,h);for(var y=10;y<h;y+=26)for(var x=10;x<w;x+=26){var on=Math.random()>.55;g.fillStyle=on?(Math.random()>.5?'#ffd98a':'#9fd0ff'):'#161c38';g.fillRect(x,y,14,16)}});
+winTex.wrapS=winTex.wrapT=THREE.RepeatWrapping;
+for(var bi=0;bi<12;bi++){var bw=rnd(8,14),bh=rnd(10,26),bx=-52+bi*10.5+rnd(-2,2);var tex=winTex.clone();tex.needsUpdate=true;tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(bw/6,bh/6);var bm=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,8),new THREE.MeshBasicMaterial({map:tex,color:0xb8c0e8}));bm.position.set(bx,bh/2,-34);scene.add(bm)}
+var stars=new THREE.BufferGeometry(),sp=[];
+for(var si=0;si<420;si++){var a=rnd(0,Math.PI*2),e=rnd(.15,1.2),rr=120;sp.push(Math.cos(a)*Math.cos(e)*rr,Math.sin(e)*rr*.8+25,Math.sin(a)*Math.cos(e)*rr)}
+stars.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
+scene.add(new THREE.Points(stars,new THREE.PointsMaterial({color:0xdfe6ff,size:0.7,sizeAttenuation:false,fog:false})));
+var moonMesh=new THREE.Mesh(new THREE.SphereGeometry(4,24,16),new THREE.MeshBasicMaterial({color:0xf2f0dc,fog:false}));
+moonMesh.position.set(-48,52,-100);scene.add(moonMesh);
+glow(-48,52,-100,0xaabbff,34,0.45);
 
-    function printLine(text, className) {
-        const div = document.createElement('div');
-        div.className = `output-line ${className}`;
-        div.innerText = text;
-        logs.appendChild(div);
-    }
-
-    function startHackEffect() {
-        inputLine.style.display = 'none'; // Giriş satırını gizle
-        printLine("\n!!! UYARI: ILLEGAL HACK ISLEMI BASLATILDI !!!\n", "error");
-        
-        let counter = 0;
-        
-        // Metinlerin akış hızı (200 milisaniye)
-        const interval = setInterval(() => {
-            if (counter < hackTexts.length) {
-                // Rastgele yeşil veya kırmızı renk vererek kaos yaratıyoruz
-                let type = Math.random() > 0.4 ? 'success' : 'error';
-                
-                // İlk ve son satır özel renkli olsun
-                if (counter === 0 || counter === hackTexts.length - 1) type = 'warning'; 
-                
-                printLine(`[+] ${hackTexts[counter]}`, type);
-                counter++;
-                window.scrollTo(0, document.body.scrollHeight);
-            } else {
-                clearInterval(interval);
-                printLine("\n[!] ISLEM TAMAMLANDI. SISTEM ELE GECIRILDI.", "warning");
-                inputLine.style.display = 'flex'; // Girişi tekrar aç
-                cmdInput.focus();
-            }
-        }, 220); 
-    }
-</script>
-</body>
-</html>
+function person(o){
+  var g=new THREE.Group();
+  var female=!!(o.dress||o.female),cast=!!o.shadow;
+  var skin=M(o.skin||0xe0b08a,{roughness:0.62}),shirt=M(o.shirt||0x888888,{roughness:0.9}),pants=M(o.pants||0x333355,{roughness:0.9}),shoe=M(o.shoe||0x1b1b1b,{roughness:0.55});
+  var wd=o.wide?1.18:1,sw=female?0.84:1;
+  function mesh(geo,mat,x,y,z,par,noShadow){var m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);if(!noShadow&&cast)m.castShadow=true;(par||g).add(m);return m}
+  var legMat=(o.dress&&!o.long)?skin:pants;
+  var legs=[],shins=[];
+  [-1,1].forEach(function(sx){
+    var th=new THREE.Group();th.position.set(sx*0.095*wd,0.93,0);g.add(th);
+    mesh(new THREE.CylinderGeometry(0.085*wd,0.066,0.46,12),legMat,0,-0.23,0,th);
+    var kn=new THREE.Group();kn.position.y=-0.46;th.add(kn);
+    mesh(new THREE.CylinderGeometry(0.063,0.045,0.42,12),legMat,0,-0.21,0,kn);
+    mesh(new THREE.BoxGeometry(0.1,0.07,0.25),shoe,0,-0.44,0.05,kn);
+    legs.push(th);shins.push(kn);
+  });
+  var hip=mesh(new THREE.SphereGeometry(0.165,16,12),o.dress?shirt:pants,0,0.95,0);hip.scale.set(1.15*wd*(female?1.08:1),0.72,0.8);
+  var tor=mesh(new THREE.CylinderGeometry(0.18*wd*sw,0.15*wd,0.5,16),shirt,0,1.2,0);tor.scale.z=0.68;
+  var ch=mesh(new THREE.SphereGeometry(0.2,16,12),shirt,0,1.38,0);ch.scale.set(1.15*wd*sw,0.85,0.72);
+  [-1,1].forEach(function(sx){mesh(new THREE.SphereGeometry(0.075,12,10),shirt,sx*0.215*wd*sw,1.5,0)});
+  mesh(new THREE.CylinderGeometry(0.04,0.045,0.1,10),skin,0,1.58,0);
+  var head=new THREE.Group();head.position.y=1.71;g.add(head);
+  var hs=mesh(new THREE.SphereGeometry(0.115,20,16),skin,0,0.01,0,head);hs.scale.set(0.9,1.12,0.98);
+  var jw=mesh(new THREE.SphereGeometry(0.085,14,10),skin,0,-0.06,0.015,head,true);jw.scale.set(0.95,0.9,0.95);
+  [-1,1].forEach(function(sx){
+    var er=mesh(new THREE.SphereGeometry(0.028,8,6),skin,sx*0.104,0.0,0,head,true);er.scale.set(0.5,1,0.8);
+    mesh(new THREE.SphereGeometry(0.02,10,8),B(0xf4f0ea),sx*0.04,0.03,0.098,head,true);
+    mesh(new THREE.SphereGeometry(0.011,8,6),B(0x15100c),sx*0.04,0.03,0.115,head,true);
+    mesh(new THREE.BoxGeometry(0.045,0.009,0.01),M(0x2a1a10),sx*0.04,0.064,0.108,head,true);
+  });
+  var nose=mesh(new THREE.SphereGeometry(0.022,8,6),skin,0,-0.012,0.11,head,true);nose.scale.set(0.9,1.2,1.3);
+  mesh(new THREE.BoxGeometry(0.04,0.008,0.01),M(0x8a3b3b),0,-0.052,0.107,head,true);
+  var hc=(o.hair!==undefined&&o.hair!==null)?o.hair:0x2a1a10;
+  var style=o.style||(o.longHair?'long':'short');
+  if(o.bald)style='bald';
+  var hm=M(hc,{roughness:0.9});
+  if(style==='short'||style==='long'){var cp=new THREE.Mesh(new THREE.SphereGeometry(0.125,18,12,0,Math.PI*2,0,Math.PI*0.52),hm);cp.position.set(0,0.02,-0.008);cp.scale.set(0.95,1.12,1.02);cp.rotation.x=-0.3;cp.castShadow=cast;head.add(cp)}
+  if(style==='long'){mesh(new THREE.BoxGeometry(0.2,0.36,0.07),hm,0,-0.1,-0.08,head);[-1,1].forEach(function(sx){mesh(new THREE.BoxGeometry(0.03,0.28,0.07),hm,sx*0.098,-0.07,-0.04,head,true)})}
+  if(style==='scarf'){var s1=new THREE.Mesh(new THREE.SphereGeometry(0.134,18,14,Math.PI/2+0.85,Math.PI*2-1.7,0,Math.PI*0.8),hm);s1.position.set(0,0.0,-0.01);s1.scale.set(0.95,1.12,1.04);s1.castShadow=cast;head.add(s1);var s2=new THREE.Mesh(new THREE.SphereGeometry(0.128,18,10,0,Math.PI*2,0,Math.PI*0.36),hm);s2.position.set(0,0.025,-0.005);s2.scale.set(0.95,1.12,1.03);s2.castShadow=cast;head.add(s2);var dr=mesh(new THREE.SphereGeometry(0.1,12,10),hm,0,-0.14,-0.03,head);dr.scale.set(1.35,0.8,0.95)}
+  if(o.cap){var cc=new THREE.Mesh(new THREE.SphereGeometry(0.13,16,10,0,Math.PI*2,0,Math.PI*0.5),M(o.cap));cc.position.set(0,0.035,0);cc.scale.set(0.97,1,1.02);cc.castShadow=cast;head.add(cc);mesh(new THREE.BoxGeometry(0.17,0.012,0.1),M(o.cap),0,0.04,0.12,head,true)}
+  if(o.mustache)mesh(new THREE.BoxGeometry(0.075,0.014,0.018),M(o.mustacheColor||0x2a1a10),0,-0.033,0.108,head,true);
+  if(o.beard)mesh(new THREE.BoxGeometry(0.12,0.06,0.05),hm,0,-0.085,0.082,head,true);
+  var arms=[],elbows=[];
+  var longSleeve=!!o.sleeve;
+  [-1,1].forEach(function(sx){
+    var sh=new THREE.Group();sh.position.set(sx*0.235*wd*sw,1.5,0);g.add(sh);
+    mesh(new THREE.CylinderGeometry(0.052,0.043,0.29,10),shirt,0,-0.145,0,sh);
+    var el=new THREE.Group();el.position.y=-0.29;sh.add(el);
+    mesh(new THREE.CylinderGeometry(0.042,0.033,0.26,10),longSleeve?shirt:skin,0,-0.13,0,el);
+    var hd=mesh(new THREE.SphereGeometry(0.04,10,8),skin,0,-0.29,0,el,true);hd.scale.set(0.9,1.25,0.7);
+    arms.push(sh);elbows.push(el);
+  });
+  if(o.dress){var lg=!!o.long;mesh(new THREE.CylinderGeometry(0.17,lg?0.37:0.32,lg?0.82:0.6,22),shirt,0,lg?0.6:0.7,0)}
+  if(o.belly){var bel=mesh(new THREE.SphereGeometry(0.2,20,16),shirt,0,1.1,0.17);bel.scale.set(1.05,0.95,0.95)}
+  if(o.overall){var bib=mesh(new THREE.BoxGeometry(0.34,0.38,0.03),pants,0,1.3,0.125,g,true);[-1,1].forEach(function(sx){var sp2=mesh(new THREE.BoxGeometry(0.05,0.34,0.03),pants,sx*0.11,1.55,0.115,g,true);sp2.rotation.z=sx*-0.08});var belt=mesh(new THREE.CylinderGeometry(0.185*wd,0.185*wd,0.07,16),M(0x6b4a2a),0,0.99,0,g,true);belt.scale.z=0.72;mesh(new THREE.BoxGeometry(0.12,0.14,0.07),M(0x8a5a2a),0.2,0.92,0.12,g,true);mesh(new THREE.BoxGeometry(0.03,0.18,0.03),M(0xc83a30),-0.2,0.92,0.13,g,true)}
+  return {g:g,legs:legs,shins:shins,arms:arms,elbows:elbows,head:head};
+}
+function walkPose(p,ph,amp){for(var i=0;i<2;i++){var q=ph+(i?Math.PI:0),s=Math.sin(q);p.legs[i].rotation.x=s*amp;p.shins[i].rotation.x=Math.max(0,Math.cos(q))*amp*1.4;p.arms[i].rotation.x=-s*amp*0.75;p.elbows[i].rotation.x=-0.25-Math.max(0,-Math.cos(q))*0.5*amp}}
+function relaxPose(p,k){for(var i=0
