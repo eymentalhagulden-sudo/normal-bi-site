@@ -1,0 +1,1 @@
+if(window.__singerRef){window.__singerRef.g.position.set(15,FY+0.45,window.__zB_SINGER);window.__singerRef.g.rotation.set(0,0,0)}

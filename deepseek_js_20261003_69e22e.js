@@ -1,0 +1,1 @@
+clubSinger=singer;
